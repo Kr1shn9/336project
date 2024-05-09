@@ -20,7 +20,14 @@ library("data.table")
 # control and the two results as success and failure.
 
 
-dataTest1= data.frame(c(55, 45), c(42, 58))
+dataTest1= data.frame(c(60, 40), c(50, 50))
+
+dataTest2= data.frame(c(70, 30), c(50, 50)) 
+
+dataTest3 = data.frame(c(30, 20), c(75, 75))
+
+dataTest4= data.frame(c(35, 15), c(75, 75))
+
 
 # add row and colomn names to dataTest. Even though it isn't based on 
 # anthing I am naming the columns treatment and control and the 
@@ -29,13 +36,18 @@ dataTest1= data.frame(c(55, 45), c(42, 58))
 colnames(dataTest1) = c('treatment', 'control')
 rownames(dataTest1) <- c("Success", "Failure")
 
-dataTest2= data.frame(c(23, 77), c(64, 36))
 
 colnames(dataTest2) = c('treatment', 'control')
 rownames(dataTest2) <- c("Success", "Failure")
 
+colnames(dataTest3) = c('treatment', 'control')
+rownames(dataTest3) <- c("Success", "Failure")
+
+colnames(dataTest4) = c('treatment', 'control')
+rownames(dataTest4) <- c("Success", "Failure")
+
 #call dataTest to make sure everything worked. 
-dataTest1
+#sum(dataTest1[1])
 ```
 ```{r}
 #Now for the actual permutation test. 
@@ -100,6 +112,7 @@ permTestVec <- function(x,n,q){
 ```{r}
 #MainDataSet <- data.frame(c(10227, 4129), c(61417, 33030))
 
+#sd(permTestVec(dataTest2, 1000, 100))
 
 b <- c()
 for(j in 1:30){
@@ -109,7 +122,7 @@ for(j in 1:30){
     x <-permTestVec(dataTest1, perms, 100)
     d <- sd(x)
     if(d>= 0.0025){
-      perms <- perms +250
+      perms <- perms + 250
     }
     else{
       b[j] = perms
@@ -118,8 +131,16 @@ for(j in 1:30){
   }
 }
 
-mean(b)
-sd(b)
+m<- mean(b)
+s <- sd(b)
+
+e <- qt(.975, df = 29)*s/sqrt(30)
+
+
+m
+s
+m-e
+m+e
 
 
 #x
