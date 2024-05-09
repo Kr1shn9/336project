@@ -1,0 +1,130 @@
+---
+title: "Untitled"
+author: "Krishna Nayar"
+date: "2024-04-21"
+output: html_document
+---
+
+```{r}
+#in this file I hope to do a simple permutation test on some made up data just 
+# to hopefully work through the mechanics of it. 
+
+#louad the libreary "data.table" so that I will be able to create a data table
+library("data.table") 
+```
+
+```{r}
+# Create data tables using some nonsense data.
+# this data frame has to columns and two rows representing two groups and 
+# two results, repsectively. We can think of the two groups as treatment and 
+# control and the two results as success and failure.
+
+
+dataTest1= data.frame(c(55, 45), c(42, 58))
+
+# add row and colomn names to dataTest. Even though it isn't based on 
+# anthing I am naming the columns treatment and control and the 
+# rows sucess and failure to that it will hopfully make it easer to think 
+# through what I am doing. 
+colnames(dataTest1) = c('treatment', 'control')
+rownames(dataTest1) <- c("Success", "Failure")
+
+dataTest2= data.frame(c(23, 77), c(64, 36))
+
+colnames(dataTest2) = c('treatment', 'control')
+rownames(dataTest2) <- c("Success", "Failure")
+
+#call dataTest to make sure everything worked. 
+dataTest1
+```
+```{r}
+#Now for the actual permutation test. 
+
+#Notice that Treatment~Binom(#of treatments, pi1)
+# and Control~Binom(# of controls, pi2)
+
+#Ho: pi1=pi2, we will estimate pi1=pi2=success/total
+
+#Ha: pi1 != pi2
+
+#Permuting the data should essentially mean generating a random number of success
+# Under the null hypotheses, 
+# we can use rbinom to generate random responses 
+
+permTest <- function(x, n){
+  
+  p<- sum(x[1,])/sum(x) #Proportion of successes
+  
+  treatmentPermData <- rbinom(n, sum(x[1]), p) #n = # of permutations
+  controlPermData <- rbinom(n, sum(x[2]), p)
+  
+  #Now we need to use each of the permutations to create an estimate of 
+  # the proportion of successes for the treatment and control
+  #I'm not sure if this is how I should do it, but I am just going to
+  # divide the number of successes by the total number of subjects
+  # for each group, and have that be my estimated proportion. 
+  treatmentPermProps<-treatmentPermData / sum(x[1])
+  controlPermProps<-controlPermData / sum(x[2])
+  
+  # now to get our sample of test statistics (or our null distribution)
+  # we will want to take the differince of the estimated proportion of 
+  # successes for the treatment group minus the estimated proportion of 
+  # successes for the control group for each of our permutations 
+  TestStatistics <- treatmentPermProps-controlPermProps
+  
+  #Now we will find the test statistic for our actual data. 
+  t <- (sum(x[1,1])/sum(x[1])) - (sum(x[1,2])/sum(x[2]))
+  
+  minus_t = -1*t #Negative of our test statistic, for comparison in a 2-sided test
+  count <- 0 #Count variable of responses that contribute to p-value
+#For loop checks how our calculated p-values compare to the test statistic - counts up the number of values that exceed it, are less than its negative, or are equivalent to it
+  for (i in 1:length(TestStatistics)) {
+    if(TestStatistics[i] > t || TestStatistics[i]<minus_t || TestStatistics[i]== t || TestStatistics[i]== minus_t) { 
+      count<- count + 1 #
+    }
+  }
+  return(count/n) #Prints our count that meet the above criteria
+}
+
+#Runs the function defined above q times.
+permTestVec <- function(x,n,q){
+  a <- c()
+  for(i in 1:q){
+    a[i] <- permTest(x,n)
+  }
+  return(a)
+}
+```
+
+
+```{r}
+#MainDataSet <- data.frame(c(10227, 4129), c(61417, 33030))
+
+
+b <- c()
+for(j in 1:30){
+  perms <- 1000
+  d <- 1
+  while(d >= 0.0025){
+    x <-permTestVec(dataTest1, perms, 100)
+    d <- sd(x)
+    if(d>= 0.0025){
+      perms <- perms +250
+    }
+    else{
+      b[j] = perms
+      break
+    }
+  }
+}
+
+mean(b)
+sd(b)
+
+
+#x
+
+#(sum(MainDataSet[1,1])/sum(MainDataSet[1])) - (sum(MainDataSet[1,2])/sum(MainDataSet[2]))
+
+#MainDataSet
+```
